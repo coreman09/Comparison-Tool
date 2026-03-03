@@ -91,6 +91,10 @@ with tab1:
 with tab2:
     st.header("Expected Task Builder")
 
+# DEBUG: show column names
+    st.write("Master list columns:", st.session_state.master_list.columns)
+    st.write("Expected tasks columns:", st.session_state.expected_tasks.columns)
+
     user_id = st.text_input("User ID")
 
     skill_choices = st.multiselect(
@@ -206,3 +210,4 @@ with tab3:
 
         st.write("Multiple Attempts")
         st.dataframe(duplicates, use_container_width=True)
+
