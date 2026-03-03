@@ -160,15 +160,14 @@ with tab3:
     if not st.session_state.its_data.empty and not st.session_state.expected_tasks.empty:
         st.subheader("Comparison Results")
 
-        its_df = st.session_state.its_data
-        exp_df = st.session_state.expected_tasks
-        # FIX: Normalize User ID types
+       its_df = st.session_state.its_data.copy()
+exp_df = st.session_state.expected_tasks.copy()
+
+# FIX: Normalize User ID types
 its_df["User Id"] = its_df["User Id"].astype(str)
 exp_df["UserID"] = exp_df["UserID"].astype(str)
 
-
-        master_norm = set(st.session_state.master_list["Skill Name"].apply(normalize_skill))
-
+master_norm = set(st.session_state.master_list["Skill Name"].apply(normalize_skill)) 
         merged = exp_df.merge(
             its_df,
             left_on=["UserID", "NormSkill"],
@@ -218,5 +217,6 @@ exp_df["UserID"] = exp_df["UserID"].astype(str)
 
         st.write("Multiple Attempts")
         st.dataframe(duplicates, width="stretch")
+
 
 
