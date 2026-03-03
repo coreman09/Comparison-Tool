@@ -145,14 +145,18 @@ with tab3:
     uploaded = st.file_uploader("Upload ITS Excel File", type=["xlsx"])
 
     if uploaded:
-        df = pd.read_excel(uploaded)
+        # Skip the first 4 title rows
+        df = pd.read_excel(uploaded, skiprows=4)
 
         # Normalize column names
         df.columns = df.columns.str.strip().str.lower()
 
-        required = ["user id", "skill name", "status", "method", "evaluator"]
+        # Show columns for debugging
+        st.write("Detected columns:", list(df.columns))
 
-        if not all(col in df.columns for col in required):
+        required = {"user id", "skill name", "status", "method", "evaluator"}
+
+        if not required.issubset(set(df.columns)):
             st.error(f"Uploaded file is missing required ITS columns. Found: {list(df.columns)}")
         else:
             df["NormSkill"] = df["skill name"].apply(normalize_skill)
@@ -167,7 +171,7 @@ with tab3:
         its_df = st.session_state.its_data.copy()
         exp_df = st.session_state.expected_tasks.copy()
 
-        # FIX: Normalize User ID types
+        # Normalize User ID types
         its_df["user id"] = its_df["user id"].astype(str)
         exp_df["UserID"] = exp_df["UserID"].astype(str)
 
@@ -227,3 +231,4 @@ with tab3:
 
         st.write("Multiple Attempts")
         st.dataframe(duplicates, width="stretch")
+
