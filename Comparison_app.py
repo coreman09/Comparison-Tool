@@ -225,3 +225,4 @@ with tab3:
 
         st.write("Multiple Attempts")
         st.dataframe(duplicates, use_container_width=True)
+
