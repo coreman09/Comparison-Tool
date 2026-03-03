@@ -4,24 +4,29 @@ import re
 import os
 
 st.set_page_config(page_title="ITS Comparison Tool", layout="wide")
-if st.button("RESET APP STATE"):
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-    st.experimental_rerun()
-# -----------------------------
-# Utility: Very-loose normalization
-# -----------------------------
+
+# ============================================================
+# SIDEBAR RESET BUTTON (SAFE)
+# ============================================================
+with st.sidebar:
+    if st.button("Reset App State"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.experimental_rerun()
+
+# ============================================================
+# NORMALIZATION UTILITY
+# ============================================================
 def normalize_skill(name: str) -> str:
     if not isinstance(name, str):
         return ""
     name = name.lower()
-    name = re.sub(r"[^a-z0-9]", "", name)  # remove punctuation + whitespace
+    name = re.sub(r"[^a-z0-9]", "", name)
     return name
 
-
-# -----------------------------
-# Initialize master list
-# -----------------------------
+# ============================================================
+# MASTER LIST INITIALIZATION
+# ============================================================
 if "master_list" not in st.session_state:
     if os.path.exists("master_skill_list.csv"):
         df = pd.read_csv("master_skill_list.csv", encoding="utf-8-sig")
@@ -37,40 +42,35 @@ if "master_list" not in st.session_state:
     else:
         st.session_state.master_list = pd.DataFrame({"Skill Name": []})
 
-
-# -----------------------------
-# Initialize expected tasks
-# -----------------------------
+# ============================================================
+# EXPECTED TASKS INITIALIZATION
+# ============================================================
 if "expected_tasks" not in st.session_state:
     st.session_state.expected_tasks = pd.DataFrame(
         columns=["UserID", "Skill Name", "NormSkill"]
     )
 
-# FORCE expected_tasks to always have correct columns
+# FORCE correct structure
 expected_cols = ["UserID", "Skill Name", "NormSkill"]
 if list(st.session_state.expected_tasks.columns) != expected_cols:
     st.session_state.expected_tasks = pd.DataFrame(columns=expected_cols)
 
-
-# -----------------------------
-# Initialize ITS data
-# -----------------------------
+# ============================================================
+# ITS DATA INITIALIZATION
+# ============================================================
 if "its_data" not in st.session_state:
     st.session_state.its_data = pd.DataFrame()
 
-
-# -----------------------------
-# Save master list to CSV
-# -----------------------------
+# ============================================================
+# SAVE MASTER LIST
+# ============================================================
 def save_master_list():
     st.session_state.master_list.to_csv("master_skill_list.csv", index=False)
 
-
-# -----------------------------
-# Tabs
-# -----------------------------
+# ============================================================
+# TABS
+# ============================================================
 tab1, tab2, tab3 = st.tabs(["Master Skill List", "Expected Tasks", "ITS Comparison"])
-
 
 # ============================================================
 # TAB 1 — MASTER SKILL LIST
@@ -104,7 +104,6 @@ with tab1:
             ]
             save_master_list()
             st.experimental_rerun()
-
 
 # ============================================================
 # TAB 2 — EXPECTED TASK BUILDER
@@ -143,7 +142,6 @@ with tab2:
 
     st.subheader("Expected Task List (All Users)")
     st.dataframe(st.session_state.expected_tasks, use_container_width=True)
-
 
 # ============================================================
 # TAB 3 — ITS COMPARISON
@@ -227,4 +225,3 @@ with tab3:
 
         st.write("Multiple Attempts")
         st.dataframe(duplicates, use_container_width=True)
-
