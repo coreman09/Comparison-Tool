@@ -4,7 +4,10 @@ import re
 import os
 
 st.set_page_config(page_title="ITS Comparison Tool", layout="wide")
-
+if st.button("RESET APP STATE"):
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.experimental_rerun()
 # -----------------------------
 # Utility: Very-loose normalization
 # -----------------------------
@@ -224,3 +227,4 @@ with tab3:
 
         st.write("Multiple Attempts")
         st.dataframe(duplicates, use_container_width=True)
+
