@@ -17,26 +17,41 @@ def normalize_skill(name: str) -> str:
 
 
 # -----------------------------
-# Initialize session_state
+# Initialize master list
 # -----------------------------
 if "master_list" not in st.session_state:
     if os.path.exists("master_skill_list.csv"):
         df = pd.read_csv("master_skill_list.csv", encoding="utf-8-sig")
 
-        # Force correct header
-        if df.shape[1] == 1:
-            df.columns = ["Skill Name"]
-        else:
-            df = df.iloc[:, [0]]
-            df.columns = ["Skill Name"]
+        # Clean header
+        df.columns = [str(c).strip() for c in df.columns]
+
+        # Force single correct column
+        df = df.iloc[:, [0]]
+        df.columns = ["Skill Name"]
 
         st.session_state.master_list = df
     else:
         st.session_state.master_list = pd.DataFrame({"Skill Name": []})
 
-if "expected_tasks" not in st.session_state:
-    st.session_state.expected_tasks = pd.DataFrame(columns=["UserID", "Skill Name", "NormSkill"])
 
+# -----------------------------
+# Initialize expected tasks
+# -----------------------------
+if "expected_tasks" not in st.session_state:
+    st.session_state.expected_tasks = pd.DataFrame(
+        columns=["UserID", "Skill Name", "NormSkill"]
+    )
+
+# FORCE expected_tasks to always have correct columns
+expected_cols = ["UserID", "Skill Name", "NormSkill"]
+if list(st.session_state.expected_tasks.columns) != expected_cols:
+    st.session_state.expected_tasks = pd.DataFrame(columns=expected_cols)
+
+
+# -----------------------------
+# Initialize ITS data
+# -----------------------------
 if "its_data" not in st.session_state:
     st.session_state.its_data = pd.DataFrame()
 
@@ -74,7 +89,10 @@ with tab1:
                 st.experimental_rerun()
 
     st.subheader("Remove a Skill")
-    remove_skill = st.selectbox("Select Skill to Remove", [""] + list(st.session_state.master_list["Skill Name"]))
+    remove_skill = st.selectbox(
+        "Select Skill to Remove",
+        [""] + list(st.session_state.master_list["Skill Name"])
+    )
 
     if st.button("Remove Skill"):
         if remove_skill:
@@ -90,10 +108,6 @@ with tab1:
 # ============================================================
 with tab2:
     st.header("Expected Task Builder")
-
-# DEBUG: show column names
-    st.write("Master list columns:", st.session_state.master_list.columns)
-    st.write("Expected tasks columns:", st.session_state.expected_tasks.columns)
 
     user_id = st.text_input("User ID")
 
@@ -210,4 +224,3 @@ with tab3:
 
         st.write("Multiple Attempts")
         st.dataframe(duplicates, use_container_width=True)
-
