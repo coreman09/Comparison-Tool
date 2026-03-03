@@ -6,7 +6,7 @@ import os
 st.set_page_config(page_title="ITS Comparison Tool", layout="wide")
 
 # ============================================================
-# SIDEBAR RESET BUTTON — SAFE (NO INFINITE LOOP)
+# SIDEBAR RESET BUTTON — SAFE
 # ============================================================
 with st.sidebar:
     if st.button("Reset App State"):
@@ -146,12 +146,16 @@ with tab3:
 
     if uploaded:
         df = pd.read_excel(uploaded)
-        required_cols = ["User Id", "Skill Name", "Status", "Method", "Evaluator Name"]
 
-        if not all(col in df.columns for col in required_cols):
-            st.error("Uploaded file is missing required ITS columns.")
+        # Normalize column names
+        df.columns = df.columns.str.strip().str.lower()
+
+        required = ["user id", "skill name", "status", "method", "evaluator"]
+
+        if not all(col in df.columns for col in required):
+            st.error(f"Uploaded file is missing required ITS columns. Found: {list(df.columns)}")
         else:
-            df["NormSkill"] = df["Skill Name"].apply(normalize_skill)
+            df["NormSkill"] = df["skill name"].apply(normalize_skill)
             st.session_state.its_data = df
 
             st.subheader("ITS Data Preview")
@@ -160,44 +164,50 @@ with tab3:
     if not st.session_state.its_data.empty and not st.session_state.expected_tasks.empty:
         st.subheader("Comparison Results")
 
-       its_df = st.session_state.its_data.copy()
-exp_df = st.session_state.expected_tasks.copy()
+        its_df = st.session_state.its_data.copy()
+        exp_df = st.session_state.expected_tasks.copy()
 
-# FIX: Normalize User ID types
-its_df["User Id"] = its_df["User Id"].astype(str)
-exp_df["UserID"] = exp_df["UserID"].astype(str)
+        # FIX: Normalize User ID types
+        its_df["user id"] = its_df["user id"].astype(str)
+        exp_df["UserID"] = exp_df["UserID"].astype(str)
 
-master_norm = set(st.session_state.master_list["Skill Name"].apply(normalize_skill)) 
+        master_norm = set(st.session_state.master_list["Skill Name"].apply(normalize_skill))
+
+        # Missing tasks
         merged = exp_df.merge(
             its_df,
             left_on=["UserID", "NormSkill"],
-            right_on=["User Id", "NormSkill"],
+            right_on=["user id", "NormSkill"],
             how="left",
             indicator=True,
         )
         missing = merged[merged["_merge"] == "left_only"][["UserID", "Skill Name"]]
 
+        # Unexpected tasks
         merged2 = its_df.merge(
             exp_df,
-            left_on=["User Id", "NormSkill"],
+            left_on=["user id", "NormSkill"],
             right_on=["UserID", "NormSkill"],
             how="left",
             indicator=True,
         )
         unexpected = merged2[merged2["_merge"] == "left_only"][
-            ["User Id", "Skill Name", "Status", "Evaluator", "Method"]
+            ["user id", "skill name", "status", "evaluator", "method"]
         ]
 
+        # Invalid skill names
         invalid = its_df[~its_df["NormSkill"].isin(master_norm)][
-            ["User Id", "Skill Name", "Status", "Evaluator", "Method"]
+            ["user id", "skill name", "status", "evaluator", "method"]
         ]
 
-        failed = its_df[its_df["Status"].str.lower() == "failed"][
-            ["User Id", "Skill Name", "Status", "Evaluator", "Method"]
+        # Failed tasks
+        failed = its_df[its_df["status"].str.lower() == "failed"][
+            ["user id", "skill name", "status", "evaluator", "method"]
         ]
 
+        # Multiple attempts
         duplicates = (
-            its_df.groupby(["User Id", "NormSkill"])
+            its_df.groupby(["user id", "NormSkill"])
             .size()
             .reset_index(name="Attempts")
         )
@@ -217,6 +227,3 @@ master_norm = set(st.session_state.master_list["Skill Name"].apply(normalize_ski
 
         st.write("Multiple Attempts")
         st.dataframe(duplicates, width="stretch")
-
-
-
