@@ -21,12 +21,21 @@ def normalize_skill(name: str) -> str:
 # -----------------------------
 if "master_list" not in st.session_state:
     if os.path.exists("master_skill_list.csv"):
-        st.session_state.master_list = pd.read_csv("master_skill_list.csv")
+        df = pd.read_csv("master_skill_list.csv", encoding="utf-8-sig")
+
+        # Force correct header
+        if df.shape[1] == 1:
+            df.columns = ["Skill Name"]
+        else:
+            df = df.iloc[:, [0]]
+            df.columns = ["Skill Name"]
+
+        st.session_state.master_list = df
     else:
-        st.session_state.master_list = pd.DataFrame({"SkillName": []})
+        st.session_state.master_list = pd.DataFrame({"Skill Name": []})
 
 if "expected_tasks" not in st.session_state:
-    st.session_state.expected_tasks = pd.DataFrame(columns=["UserID", "SkillName", "NormSkill"])
+    st.session_state.expected_tasks = pd.DataFrame(columns=["UserID", "Skill Name", "NormSkill"])
 
 if "its_data" not in st.session_state:
     st.session_state.its_data = pd.DataFrame()
@@ -59,18 +68,18 @@ with tab1:
 
     if st.button("Add Skill"):
         if new_skill.strip():
-            if new_skill not in st.session_state.master_list["SkillName"].values:
+            if new_skill not in st.session_state.master_list["Skill Name"].values:
                 st.session_state.master_list.loc[len(st.session_state.master_list)] = [new_skill]
                 save_master_list()
                 st.experimental_rerun()
 
     st.subheader("Remove a Skill")
-    remove_skill = st.selectbox("Select Skill to Remove", [""] + list(st.session_state.master_list["SkillName"]))
+    remove_skill = st.selectbox("Select Skill to Remove", [""] + list(st.session_state.master_list["Skill Name"]))
 
     if st.button("Remove Skill"):
         if remove_skill:
             st.session_state.master_list = st.session_state.master_list[
-                st.session_state.master_list["SkillName"] != remove_skill
+                st.session_state.master_list["Skill Name"] != remove_skill
             ]
             save_master_list()
             st.experimental_rerun()
@@ -86,7 +95,7 @@ with tab2:
 
     skill_choices = st.multiselect(
         "Select Skill Names",
-        options=list(st.session_state.master_list["SkillName"]),
+        options=list(st.session_state.master_list["Skill Name"]),
         default=st.session_state.get("last_selected_skills", []),
     )
 
@@ -141,7 +150,7 @@ with tab3:
 
         its_df = st.session_state.its_data
         exp_df = st.session_state.expected_tasks
-        master_norm = set(st.session_state.master_list["SkillName"].apply(normalize_skill))
+        master_norm = set(st.session_state.master_list["Skill Name"].apply(normalize_skill))
 
         # Missing tasks
         merged = exp_df.merge(
@@ -151,7 +160,7 @@ with tab3:
             how="left",
             indicator=True,
         )
-        missing = merged[merged["_merge"] == "left_only"][["UserID", "SkillName"]]
+        missing = merged[merged["_merge"] == "left_only"][["UserID", "Skill Name"]]
 
         # Unexpected tasks
         merged2 = its_df.merge(
