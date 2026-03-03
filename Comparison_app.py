@@ -162,6 +162,11 @@ with tab3:
 
         its_df = st.session_state.its_data
         exp_df = st.session_state.expected_tasks
+        # FIX: Normalize User ID types
+its_df["User Id"] = its_df["User Id"].astype(str)
+exp_df["UserID"] = exp_df["UserID"].astype(str)
+
+
         master_norm = set(st.session_state.master_list["Skill Name"].apply(normalize_skill))
 
         merged = exp_df.merge(
@@ -213,4 +218,5 @@ with tab3:
 
         st.write("Multiple Attempts")
         st.dataframe(duplicates, width="stretch")
+
 
