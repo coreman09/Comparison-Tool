@@ -154,7 +154,7 @@ with tab3:
         # Show columns for debugging
         st.write("Detected columns:", list(df.columns))
 
-        required = {"user id", "skill name", "status", "method", "evaluator"}
+        required = {"user id", "skill name", "status", "method", "evaluator name"}
 
         if not required.issubset(set(df.columns)):
             st.error(f"Uploaded file is missing required ITS columns. Found: {list(df.columns)}")
@@ -196,17 +196,17 @@ with tab3:
             indicator=True,
         )
         unexpected = merged2[merged2["_merge"] == "left_only"][
-            ["user id", "skill name", "status", "evaluator", "method"]
+            ["user id", "skill name", "status", "evaluator name", "method"]
         ]
 
         # Invalid skill names
         invalid = its_df[~its_df["NormSkill"].isin(master_norm)][
-            ["user id", "skill name", "status", "evaluator", "method"]
+            ["user id", "skill name", "status", "evaluator name", "method"]
         ]
 
         # Failed tasks
         failed = its_df[its_df["status"].str.lower() == "failed"][
-            ["user id", "skill name", "status", "evaluator", "method"]
+            ["user id", "skill name", "status", "evaluator name", "method"]
         ]
 
         # Multiple attempts
@@ -231,4 +231,5 @@ with tab3:
 
         st.write("Multiple Attempts")
         st.dataframe(duplicates, width="stretch")
+
 
