@@ -12,7 +12,7 @@ with st.sidebar:
     if st.button("Reset App State"):
         for key in list(st.session_state.keys()):
             del st.session_state[key]
-        st.experimental_rerun()
+        st.rerun()
 
 # ============================================================
 # NORMALIZATION UTILITY
@@ -30,14 +30,9 @@ def normalize_skill(name: str) -> str:
 if "master_list" not in st.session_state:
     if os.path.exists("master_skill_list.csv"):
         df = pd.read_csv("master_skill_list.csv", encoding="utf-8-sig")
-
-        # Clean header
         df.columns = [str(c).strip() for c in df.columns]
-
-        # Force single correct column
         df = df.iloc[:, [0]]
         df.columns = ["Skill Name"]
-
         st.session_state.master_list = df
     else:
         st.session_state.master_list = pd.DataFrame({"Skill Name": []})
@@ -50,7 +45,6 @@ if "expected_tasks" not in st.session_state:
         columns=["UserID", "Skill Name", "NormSkill"]
     )
 
-# FORCE correct structure
 expected_cols = ["UserID", "Skill Name", "NormSkill"]
 if list(st.session_state.expected_tasks.columns) != expected_cols:
     st.session_state.expected_tasks = pd.DataFrame(columns=expected_cols)
@@ -79,7 +73,7 @@ with tab1:
     st.header("Master Skill Name List")
 
     st.subheader("Current Skills")
-    st.dataframe(st.session_state.master_list, use_container_width=True)
+    st.dataframe(st.session_state.master_list, width="stretch")
 
     st.subheader("Add a New Skill")
     new_skill = st.text_input("Skill Name to Add")
@@ -89,7 +83,7 @@ with tab1:
             if new_skill not in st.session_state.master_list["Skill Name"].values:
                 st.session_state.master_list.loc[len(st.session_state.master_list)] = [new_skill]
                 save_master_list()
-                st.experimental_rerun()
+                st.rerun()
 
     st.subheader("Remove a Skill")
     remove_skill = st.selectbox(
@@ -103,7 +97,7 @@ with tab1:
                 st.session_state.master_list["Skill Name"] != remove_skill
             ]
             save_master_list()
-            st.experimental_rerun()
+            st.rerun()
 
 # ============================================================
 # TAB 2 — EXPECTED TASK BUILDER
@@ -125,7 +119,6 @@ with tab2:
 
             for skill in skill_choices:
                 norm = normalize_skill(skill)
-
                 duplicate = (
                     (st.session_state.expected_tasks["UserID"] == user_id)
                     & (st.session_state.expected_tasks["NormSkill"] == norm)
@@ -138,10 +131,10 @@ with tab2:
                         norm,
                     ]
 
-            st.experimental_rerun()
+            st.rerun()
 
     st.subheader("Expected Task List (All Users)")
-    st.dataframe(st.session_state.expected_tasks, use_container_width=True)
+    st.dataframe(st.session_state.expected_tasks, width="stretch")
 
 # ============================================================
 # TAB 3 — ITS COMPARISON
@@ -162,7 +155,7 @@ with tab3:
             st.session_state.its_data = df
 
             st.subheader("ITS Data Preview")
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
 
     if not st.session_state.its_data.empty and not st.session_state.expected_tasks.empty:
         st.subheader("Comparison Results")
@@ -171,7 +164,6 @@ with tab3:
         exp_df = st.session_state.expected_tasks
         master_norm = set(st.session_state.master_list["Skill Name"].apply(normalize_skill))
 
-        # Missing tasks
         merged = exp_df.merge(
             its_df,
             left_on=["UserID", "NormSkill"],
@@ -181,7 +173,6 @@ with tab3:
         )
         missing = merged[merged["_merge"] == "left_only"][["UserID", "Skill Name"]]
 
-        # Unexpected tasks
         merged2 = its_df.merge(
             exp_df,
             left_on=["User Id", "NormSkill"],
@@ -193,17 +184,14 @@ with tab3:
             ["User Id", "Skill Name", "Status", "Evaluator", "Method"]
         ]
 
-        # Invalid skill names
         invalid = its_df[~its_df["NormSkill"].isin(master_norm)][
             ["User Id", "Skill Name", "Status", "Evaluator", "Method"]
         ]
 
-        # Failed tasks
         failed = its_df[its_df["Status"].str.lower() == "failed"][
             ["User Id", "Skill Name", "Status", "Evaluator", "Method"]
         ]
 
-        # Multiple attempts
         duplicates = (
             its_df.groupby(["User Id", "NormSkill"])
             .size()
@@ -212,17 +200,16 @@ with tab3:
         duplicates = duplicates[duplicates["Attempts"] > 1]
 
         st.write("Missing Tasks")
-        st.dataframe(missing, use_container_width=True)
+        st.dataframe(missing, width="stretch")
 
         st.write("Unexpected Tasks")
-        st.dataframe(unexpected, use_container_width=True)
+        st.dataframe(unexpected, width="stretch")
 
         st.write("Invalid Skill Names")
-        st.dataframe(invalid, use_container_width=True)
+        st.dataframe(invalid, width="stretch")
 
         st.write("Failed Tasks")
-        st.dataframe(failed, use_container_width=True)
+        st.dataframe(failed, width="stretch")
 
         st.write("Multiple Attempts")
-        st.dataframe(duplicates, use_container_width=True)
-
+        st.dataframe(duplicates, width="stretch")
