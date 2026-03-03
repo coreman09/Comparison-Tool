@@ -146,7 +146,7 @@ with tab3:
 
     if uploaded:
         df = pd.read_excel(uploaded)
-        required_cols = ["User Id", "Skill Name", "Status", "Method", "Evaluator"]
+        required_cols = ["User Id", "Skill Name", "Status", "Method", "Evaluator Name"]
 
         if not all(col in df.columns for col in required_cols):
             st.error("Uploaded file is missing required ITS columns.")
@@ -213,3 +213,4 @@ with tab3:
 
         st.write("Multiple Attempts")
         st.dataframe(duplicates, width="stretch")
+
